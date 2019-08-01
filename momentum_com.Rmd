@@ -1,0 +1,397 @@
+---
+title: "Project2"
+output: 
+  pdf_document:
+    toc: true
+    number_sections: true
+Supervisor : Carsten, Bartek, Martin
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Preparation
+
+## Library call
+```{r}
+library(hadron)
+```
+
+## Variable declaration
+```{r}
+variable_set <- array(0, dim = c(7, 3))
+colnames(variable_set) <- c("am_pi", "L", "a_latt")
+
+rownames(variable_set) <-
+c(
+'cA211.53.24',
+'cA211.40.24',
+'cA211.30.32',
+'cA211.12.48',
+'cB211.25.48',
+'cB211.072.64',
+'cC211.060.80'
+)
+
+variable_set[1,1]<- 0.1667
+variable_set[2,1]<- 0.1452
+variable_set[3,1]<- 0.1256
+variable_set[4,1]<- 0.0794
+variable_set[5,1]<- 0.1042
+variable_set[6,1]<- 0.0566
+variable_set[7,1]<- 0.0474
+
+variable_set[1,2]<- 24
+variable_set[2,2]<- 24
+variable_set[3,2]<- 24
+variable_set[4,2]<- 24
+variable_set[5,2]<- 48
+variable_set[6,2]<- 64
+variable_set[7,2]<- 80
+
+variable_set[1,3]<- 0.097
+variable_set[2,3]<- 0.097
+variable_set[3,3]<- 0.097
+variable_set[4,3]<- 0.097
+variable_set[5,3]<- 0.081
+variable_set[6,3]<- 0.081
+variable_set[7,3]<- 0.069
+
+
+variable_set
+```
+
+## $Q^2$ calculation and other function declaration
+```{r}
+fn1 <- function(p1, p2, m, L, a_latt) {
+  A <- (2 * pi) / L
+  Q_sqr <-
+  (-0.1937 ^ 2) * (A / a_latt) ^ 2 * ((sqrt((m / A) ^ 2 + p2[1] ^ 2 + p2[2] ^ 2 + p2[3] ^ 2) - sqrt((m /
+  A) ^ 2 + p1[1] ^ 2 + p1[2] ^ 2 + p1[3] ^ 2)) ^ 2 - (p1[1] - p2[1]) ^ 2 - (p1[2] - p2[2]) ^
+  2 - (p1[3] - p2[3]) ^ 2)
+}
+
+
+fn3 <- function(p1, p2, m, L, a_latt) {
+A <- (2 * pi) / L
+unit1 <- sum(p1 ^ 2)
+unit2 <- sum(p2 ^ 2)
+
+if (unit2 > unit1) {
+E_pi <-
+193.7 * (A / a_latt) * ((sqrt((m / A) ^ 2 + p2[1] ^ 2 + p2[2] ^ 2 + p2[3] ^ 2)))
+}
+else{
+E_pi <-
+193.7 * (A / a_latt) * ((sqrt((m / A) ^ 2 + p1[1] ^ 2 + p1[2] ^ 2 + p1[3] ^ 2)))
+}
+}
+
+
+fn2 <- function(p1, p2, m, L, a_latt) {
+A <- (2 * pi) / L
+p_tr <-
+193.7 * (A / a_latt) * sqrt((p1[1] - p2[1]) ^ 2 + (p1[2] - p2[2]) ^ 2 + (p1[3] - p2[3]) ^
+2)
+}
+```
+
+## Momentum combination list descending function
+```{r}
+rearrange<-function(arr, d){
+    if(d==1){
+      newarr<-arr
+    }
+  else{
+  temp <- array(0, dim=7)
+  m<-1
+  while (m!=0){
+    m<-0
+    for (i in 1:d^2){
+      temp<-arr[i, 2:8]
+      for (j in i:d^2){
+        if (temp[7]<arr[j,8]){
+          m<-m+1
+          arr[i, 2:8]<-arr[j,2:8]
+          arr[j,2:8]<-temp
+          break
+      }
+    }
+  }
+  }
+  newarr<-arr
+  }
+  }
+
+```
+
+
+## Momentum combination genaration
+```{r}
+lst <- array(0, dim=c(4,900,8))
+p1<- array(0, dim=3)
+p2<- array(0, dim=3)
+a<- array(0, dim=4)
+for (i in 1:3){
+  for (j in 1:3){
+    for (k in 1:3){
+      p1[1]<-i-2
+      p1[2]<-j-2
+      p1[3]<-k-2
+      unit<-sum(p1^2)
+      for (n in 1:4){
+        if (unit<=n-1){
+          a[n]<-a[n]+1
+          lst[n,a[n],2]<-p1[1]
+          lst[n,a[n],3]<-p1[2]
+          lst[n,a[n],4]<-p1[3]
+        }
+      }
+    }
+  }
+}
+```
+
+
+
+## Plotting array ordering function
+```{r}
+arrange1<-function(lst, d){
+    if(d==1){
+      arr<-array(0, dim=2)
+    for (n in 1:3){
+    p1[n]<-lst[1+n]
+    p2[n]<-lst[4+n]
+    }
+      arr[1]<-lst[8]
+      arr[2]<-fn3(p1,p2, m, L, a_latt)
+  }
+  else{
+arr<-array(0, dim=c(d^2,2))
+for (j in 1:d^2){
+  arr[1:d^2, 1]<-lst[1:d^2,8]
+  for (n in 1:3){
+    p1[n]<-lst[j,1+n]
+    p2[n]<-lst[j,4+n]
+    }
+  arr[j, 2]<-fn3(p1,p2, m, L, a_latt)
+}
+}
+newarr<-arr
+  }
+
+arrange2<-function(lst, d){
+    if(d==1){
+      arr<-array(0, dim=2)
+    for (n in 1:3){
+    p1[n]<-lst[1+n]
+    p2[n]<-lst[4+n]
+    }
+    arr[1]<-lst[8]
+    arr[2]<-fn2(p1,p2, m, L, a_latt)
+    }
+  else{
+arr<-array(0, dim=c(d^2,2))
+for (j in 1:d^2){
+  arr[1:d^2, 1]<-lst[1:d^2,8]
+  for (n in 1:3){
+    p1[n]<-lst[j,1+n]
+    p2[n]<-lst[j,4+n]
+    }
+  arr[j, 2]<-fn2(p1,p2, m, L, a_latt)
+}
+}
+newarr<-arr
+  }
+```
+
+
+
+# cA211.53.24
+
+## Calculating $Q^2$ for each combination
+```{r}
+m<-variable_set[1,1]
+L <- variable_set[1,2]
+a_latt<-variable_set[1,3]
+
+
+for (unit in 1:4){
+  d<-a[unit]
+  for (j in 1:d){
+    for (i in 1:d){
+      for (n in 1:3){
+        lst[unit,i+d*(j-1),4+n]<-lst[unit,j,1+n]
+        lst[unit,i+d*(j),1+n]<-lst[unit,i,1+n]
+        }
+      for (k in 1:d^2){
+        for (n in 1:3){
+        p1[n]<-lst[unit,k,1+n]
+        p2[n]<-lst[unit,k,4+n]
+        }
+        lst[unit,k,1]<-k
+        lst[unit,k,8]<-fn1(p1,p2, m, L, a_latt)
+      }
+    }
+  }
+}
+```
+
+## Data saving
+```{r}
+data <- array(dim = c(4, 900, 8))
+for (i in 1:4) {
+data [i, 1:(a[i] ^ 2), ] <- rearrange(lst[i, 1:a[i] ^ 2, ], a[i])
+dimnames(data) <-
+list(
+c(1, 2, 3, 4),
+c(1:900),
+c(
+paste('# of unit=', i - 1),
+'p1[x]',
+'p1[y]',
+'p1[z]',
+'p2[x]',
+'p2[y]',
+'p2[z]',
+'Q^2'
+)
+)
+}
+data[2,1:49, ]
+```
+
+## Plot result for cA211.53.24, momentum shell=0,1,2,3
+```{r}
+for (i in 1:4){
+arr1<-arrange1(data[i,1:(a[i]^2),], a[i])
+arr2<-arrange2(data[i,1:(a[i]^2),], a[i])
+
+if(i==1){
+plot(
+x=arr2[1],y=arr2[2],
+xlab = expression(paste('Q^2 (GeV^2)')),
+ylab = expression(paste('sqrt(|p1-p2|^2) (MeV)')),
+main = paste(rownames(variable_set)[1], 'mom. shell=', i-1))
+
+plot(
+x=arr1[1],y=arr1[2],
+xlab = expression(paste('Q^2 (GeV^2)')),
+ylab = expression(paste('sqrt(M_pi^2 + p^2) (MeV)')),
+main = paste(rownames(variable_set)[1], 'mom. shell=', i-1))
+}
+
+else{
+plot(
+arr2,
+xlab = expression(paste('Q^2 (GeV^2)')),
+ylab = expression(paste('sqrt(|p1-p2|^2) (MeV)')),
+main = paste(rownames(variable_set)[1], 'mom. shell=', i-1))
+
+plot(
+arr1,
+xlab = expression(paste('Q^2 (GeV^2)')),
+ylab = expression(paste('sqrt(M_pi^2 + p^2) (MeV)')),
+main = paste(rownames(variable_set)[1], 'mom. shell=', i-1))
+}
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+# cB2111.25.48 ~ cC211.060.80
+
+```{r}
+for (s in 2:7) {
+  m <- variable_set[s, 1]
+  L <- variable_set[s, 2]
+  a_latt <- variable_set[s, 3]
+  
+  for (unit in 1:4) {
+  d <- a[unit]
+  for (j in 1:d) {
+  for (i in 1:d) {
+  for (n in 1:3) {
+  lst[unit, i + d * (j - 1), 4 + n] <- lst[unit, j, 1 + n]
+  lst[unit, i + d * (j), 1 + n] <- lst[unit, i, 1 + n]
+  }
+  for (k in 1:d ^ 2) {
+  for (n in 1:3) {
+  p1[n] <- lst[unit, k, 1 + n]
+  p2[n] <- lst[unit, k, 4 + n]
+  }
+  lst[unit, k, 1] <- k
+  lst[unit, k, 8] <- fn1(p1, p2, m, L, a_latt)
+  }
+  }
+  }
+  }
+  
+  data <- array(dim = c(4, 900, 8))
+  for (i in 1:4) {
+  dimnames(data) <-
+  list(
+  c(1, 2, 3, 4),
+  c(1:900),
+  c(
+  paste('# of unit=', i - 1),
+  'p1[x]',
+  'p1[y]',
+  'p1[z]',
+  'p2[x]',
+  'p2[y]',
+  'p2[z]',
+  'Q^2'
+  )
+  )
+  data [i, 1:(a[i] ^ 2),] <- rearrange(lst[i, 1:a[i] ^ 2,], a[i])
+  }
+  
+  for (i in 1:4) {
+  arr1 <- arrange1(data[i, 1:(a[i] ^ 2),], a[i])
+  arr2 <- arrange2(data[i, 1:(a[i] ^ 2),], a[i])
+  if (i == 1) {
+  plot(
+  x = arr2[1],
+  y = arr2[2],
+  xlab = expression(paste('Q^2 (GeV^2)')),
+  ylab = expression(paste('sqrt(|p1-p2|^2) (MeV)')),
+  main = paste(rownames(variable_set)[1], 'mom. shell=', i - 1)
+  )
+  
+  plot(
+  x = arr1[1],
+  y = arr1[2],
+  xlab = expression(paste('Q^2 (GeV^2)')),
+  ylab = expression(paste('sqrt(M_pi^2 + p^2) (MeV)')),
+  main = paste(rownames(variable_set)[1], 'mom. shell=', i - 1)
+  )
+  }
+  else{
+  plot(
+  arr2,
+  xlab = expression(paste('Q^2 (GeV^2)')),
+  ylab = expression(paste('sqrt(|p1-p2|^2) (MeV)')),
+  main = paste(rownames(variable_set)[s], 'mom. shell=', i - 1)
+  )
+  
+  plot(
+  arr1,
+  xlab = expression(paste('Q^2 (GeV^2)')),
+  ylab = expression(paste('sqrt(M_pi^2 + p^2) (MeV)')),
+  main = paste(rownames(variable_set)[s], 'mom. shell=', i - 1)
+  )
+  }
+  }
+}
+```
